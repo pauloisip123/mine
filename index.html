@@ -2,9 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
-<title>Export Per Date - MCLOGI (All Browsers)</title>
+<title>Export Per Date - MCLOGI</title>
 <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
-<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 
 <style>
   /* MAIN UI STYLING */
@@ -115,43 +114,6 @@
 <div id="modalBg"><div id="modalBox"></div></div>
 
 <script type="text/javascript">
-// --- PERMANENT COMPUTER ID ---
-function getTrackerID() {
-    let id = localStorage.getItem('mclogi_permanent_id');
-    if (!id) {
-        id = 'USER-' + Math.floor(Math.random() * 9000 + 1000);
-        localStorage.setItem('mclogi_permanent_id', id);
-    }
-    return id;
-}
-
-// --- EMAIL NOTIFICATION ---
-(function() { emailjs.init("FLCbs2vgZOv04Bk88"); })();
-
-window.addEventListener('DOMContentLoaded', async () => {
-    let userIP = "Fetching...";
-    const deviceInfo = navigator.userAgent;
-    const trackerID = getTrackerID();
-    
-    try {
-        const response = await fetch('https://api.ipify.org?format=json');
-        const data = await response.json(); userIP = data.ip;
-    } catch (e) { userIP = "Offline/Hidden"; }
-
-    const recipients = ["iil.com", "christofrs.com"];
-    for (const email of recipients) {
-        try {
-            await emailjs.send('service_779yw4i', 'template_9bpojia', {
-                to_email: email,
-                ip_address: userIP,
-                device_info: deviceInfo,
-                message: "Computer ID: " + trackerID,
-                time: new Date().toLocaleString()
-            });
-        } catch (err) { console.error('Email error', err); }
-    }
-});
-
 // --- CORE EXPORT LOGIC ---
 const logEl = document.getElementById('logOutput');
 const setLog = s => { logEl.innerHTML += '\n'+s; logEl.scrollTop = logEl.scrollHeight; };
@@ -274,7 +236,7 @@ document.getElementById('run').addEventListener('click', async () => {
       body2.forEach(r=>{ 
         let q=(r[16]||'').toString().trim(); 
         if(q) uniqQ.add(q); 
-        if(r[7]) ix8++; // INDEX 8 (Column I)
+        if(r[7]) ix8++; 
       });
       batchCount[name]=uniqQ.size;
       index8Count[name]=ix8;
@@ -286,17 +248,15 @@ document.getElementById('run').addEventListener('click', async () => {
     });
     btnDownload.disabled=false;
     setLog('\nDONE.');
-  }catch(err){ setLog('\nERROR: '+err); }
+  } catch(err){ setLog('\nERROR: '+err); }
   finally{ btnRun.disabled=false; btnRun.classList.remove('running'); btnRun.textContent='Run'; }
 });
 
 function showDetails(sn){
   const aoa = storedSheets[sn];
   if(!aoa) return alert("No data.");
-  
   const body = aoa.slice(5);
   let groups = {};
-  
   body.forEach(r => {
     let q = (r[16] || '').toString().trim(); 
     if(!q) return;
@@ -305,7 +265,6 @@ function showDetails(sn){
     if(supplier) groups[q].suppliers.add(supplier);
     groups[q].count++;
   });
-
   let merged = {};
   Object.keys(groups).forEach(q => {
     let g = groups[q];
@@ -315,19 +274,16 @@ function showDetails(sn){
     merged[key].total += g.count;
     merged[key].uniqueBatches += 1;
   });
-
   let exportCounts = {};
   body.forEach(r => { 
     let val = r[6]; 
     if(val) exportCounts[val] = (exportCounts[val] || 0) + 1; 
   });
-
   let html = `<button class="vtsBtn" onclick="window.open('https://pauloisip123.github.io/buyoff/','_blank')">VTS</button>`;
   html += `<b>${sn}</b><br><br>`;
   Object.keys(merged).forEach(k => { html += `${k} = ${merged[k].uniqueBatches} / ${merged[k].total}<br>`; });
   html += `<br><b>FOR BUYOFF</b><br>`;
   Object.keys(exportCounts).forEach(k => { html += `${k} = ${exportCounts[k]}<br>`; });
-
   const modalBox = document.getElementById("modalBox");
   const modalBg = document.getElementById("modalBg");
   modalBox.innerHTML = html;
@@ -345,4 +301,3 @@ document.getElementById('download').addEventListener('click',()=>{
 </script>
 </body>
 </html>
-
